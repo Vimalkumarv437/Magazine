@@ -1,0 +1,312 @@
+/* Navigation Sidebar Layout */
+.sidebar-thumbnails-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: rgba(10, 10, 14, 0.45);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  box-sizing: border-box;
+}
+
+/* Tabs Header Switcher */
+.sidebar-tabs-header {
+  display: flex;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 8px;
+}
+
+.sidebar-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.sidebar-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar-tab-btn.tab-active {
+  background: rgba(255, 183, 3, 0.12);
+  color: #ffb703;
+  border-color: rgba(255, 183, 3, 0.25);
+  box-shadow: 0 0 15px rgba(255, 183, 3, 0.1);
+}
+
+/* Thumbnails list layout */
+.sidebar-thumbs-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  align-content: start;
+}
+
+/* Custom Scrollbar for premium feel */
+.sidebar-thumbs-list::-webkit-scrollbar,
+.sidebar-toc-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-thumbs-list::-webkit-scrollbar-track,
+.sidebar-toc-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-thumbs-list::-webkit-scrollbar-thumb,
+.sidebar-toc-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.sidebar-thumbs-list::-webkit-scrollbar-thumb:hover,
+.sidebar-toc-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 183, 3, 0.4);
+}
+
+/* Thumbnail Item Grid Card */
+.thumb-item-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid transparent;
+}
+
+.thumb-item-box:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.thumb-item-box.active-thumb {
+  background: rgba(255, 183, 3, 0.06) !important;
+  border-color: rgba(255, 183, 3, 0.3) !important;
+  box-shadow: inset 0 0 10px rgba(255, 183, 3, 0.05);
+}
+
+.thumb-item-box.active-thumb .thumb-preview-frame {
+  border-color: #ffb703;
+  box-shadow: 0 0 15px rgba(255, 183, 3, 0.25);
+}
+
+.thumb-preview-frame {
+  width: 100%;
+  aspect-ratio: 3/4;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  position: relative;
+  transition: all 0.25s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.thumb-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.thumb-item-box:hover .thumb-image {
+  transform: scale(1.05);
+}
+
+.thumb-page-num {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 6px;
+  transition: color 0.2s;
+}
+
+.thumb-item-box:hover .thumb-page-num {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.thumb-item-box.active-thumb .thumb-page-num {
+  color: #ffb703;
+}
+
+/* Locked Card States */
+.locked-thumb .thumb-preview-frame {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.thumb-locked-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(12, 12, 16, 0.85);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.25);
+  transition: all 0.2s;
+}
+
+.thumb-item-box:hover .thumb-locked-overlay {
+  color: #ffb703;
+  background: rgba(12, 12, 16, 0.75);
+}
+
+.thumb-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Table of contents styling */
+.sidebar-toc-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toc-info-bar {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.4;
+}
+
+.toc-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toc-item-row:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.toc-item-row.active-toc {
+  background: rgba(255, 183, 3, 0.08);
+  border-color: rgba(255, 183, 3, 0.25);
+}
+
+.toc-number-pill {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.2s;
+}
+
+.toc-item-row:hover .toc-number-pill {
+  background: rgba(255, 183, 3, 0.2);
+  color: #ffb703;
+}
+
+.toc-item-row.active-toc .toc-number-pill {
+  background: #ffb703;
+  color: #0c0c0f;
+}
+
+.toc-text-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.toc-item-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  transition: color 0.2s;
+}
+
+.toc-item-row:hover .toc-item-title {
+  color: #ffffff;
+}
+
+.toc-item-row.active-toc .toc-item-title {
+  color: #ffb703;
+}
+
+.toc-item-desc {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Locked items */
+.locked-toc {
+  opacity: 0.5;
+}
+
+.locked-toc:hover {
+  opacity: 0.8;
+  transform: translateX(4px);
+  border-color: rgba(255, 183, 3, 0.2);
+}
+
+.locked-toc:hover .toc-number-pill {
+  background: rgba(255, 183, 3, 0.1);
+  color: #ffb703;
+}
