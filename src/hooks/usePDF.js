@@ -10,7 +10,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 const PAGE_BATCH_SIZE = 10;
 const RENDER_SCALE = 1.5; // High sharpness balance
 
-export function usePDF(pdfUrl = '') {
+export function usePDF(pdfUrl = 'https://y45lw8fa3udvqq4m.public.blob.vercel-storage.com/MAGAZINE%202025-2026.pdf') {
   const [pdfDoc, setPdfDoc] = useState(null);
   const [numPages, setNumPages] = useState(0);
   const [loadingDoc, setLoadingDoc] = useState(true);

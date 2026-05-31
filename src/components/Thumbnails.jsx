@@ -1,60 +1,43 @@
-import { useEffect, useRef, useState } from 'react';
-import { Lock, FileText, Compass, Loader2 } from 'lucide-react';
+import { useRef, useEffect } from 'react';
+import { FileText, Compass } from 'lucide-react';
+import { useState } from 'react';
 import './Thumbnails.css';
 
-// Custom lightweight visible observer wrapper for progressive rendering
-function ThumbnailItem({ pageNum, pageCache, renderingPages, renderPageToCache, isLocked, isActive, onClick }) {
-  const containerRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
+/**
+ * LazyThumbnail — only loads the image when scrolled into view
+ */
+function LazyThumbnail({ pageNum, getPageImageUrl, isActive, onClick }) {
+  const ref = useRef(null);
+  const [src, setSrc] = useState(null);
 
-  // Lazy render ONLY when thumbnail is scrolled into viewport! (Ultimate performance)
   useEffect(() => {
-    if (isLocked) return;
+    if (src) return; // already loaded
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
-          // Request rendering if not already cached
-          if (!pageCache[pageNum] && !renderingPages[pageNum]) {
-            renderPageToCache(pageNum);
-          }
+          setSrc(getPageImageUrl(pageNum));
           observer.disconnect();
         }
       },
-      { rootMargin: '100px' } // Pre-trigger slightly before scroll
+      { rootMargin: '120px' }
     );
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
+    if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
-  }, [pageNum, pageCache, renderingPages, renderPageToCache, isLocked]);
+  }, [pageNum, getPageImageUrl, src]);
 
   return (
     <div
-      ref={containerRef}
-      className={`thumb-item-box ${isActive ? 'active-thumb' : ''} ${isLocked ? 'locked-thumb' : ''}`}
+      ref={ref}
+      className={`thumb-item-box ${isActive ? 'active-thumb' : ''}`}
       onClick={onClick}
     >
       <div className="thumb-preview-frame">
-        {isLocked ? (
-          <div className="thumb-locked-overlay">
-            <Lock size={16} className="lock-icon" />
-          </div>
-        ) : !pageCache[pageNum] ? (
-          <div className="thumb-loading">
-            <Loader2 size={16} className="animate-spin text-amber-500" />
-          </div>
-        ) : (
-          <img
-            src={pageCache[pageNum]}
-            alt={`Page ${pageNum} Thumb`}
-            className="thumb-image"
-            loading="lazy"
-          />
-        )}
+        {src
+          ? <img src={src} alt={`Page ${pageNum}`} className="thumb-image" loading="lazy" />
+          : <div className="thumb-loading" />
+        }
       </div>
       <span className="thumb-page-num">Page {pageNum}</span>
     </div>
@@ -63,18 +46,15 @@ function ThumbnailItem({ pageNum, pageCache, renderingPages, renderPageToCache, 
 
 export function Thumbnails({
   numPages,
-  pageCache,
-  renderingPages,
-  renderPageToCache,
+  getPageImageUrl,
   activePage,
   setActivePage,
-  maxAllowedPages,
-  loadNextBatch,
+  isDoublePage,
 }) {
-  const [activeTab, setActiveTab] = useState('thumbs'); // 'thumbs' or 'toc'
-  const listContainerRef = useRef(null);
+  const [activeTab, setActiveTab] = useState('thumbs');
+  const listRef = useRef(null);
 
-  // Pre-defined premium Table of Contents (indicative sections of a typical school/corporate annual magazine)
+  // Table of contents — generic section labels; can be customised
   const tocSections = [
     { title: 'Front Cover', page: 1, desc: 'Welcome Page' },
     { title: "Editor's Note", page: 2, desc: 'Preface & Acknowledgements' },
@@ -83,81 +63,53 @@ export function Thumbnails({
     { title: 'Spotlight Features', page: 12, desc: 'Outstanding Achievements' },
     { title: 'Creative Corner', page: 18, desc: 'Student Contributions' },
     { title: 'Sports Achievements', page: 24, desc: 'Athletic Triumphs' },
-    { title: 'Back Cover', page: numPages || 30, desc: 'Concluding Remarks' },
+    { title: 'Back Cover', page: numPages, desc: 'Concluding Remarks' },
   ];
 
-  const handleThumbClick = (pageNum) => {
-    if (pageNum > maxAllowedPages) {
-      // Offer to load next batch automatically!
-      const confirmLoad = window.confirm(
-        `Page ${pageNum} is in a locked batch. Would you like to unlock pages up to page ${Math.ceil(pageNum / 10) * 10} now?`
-      );
-      if (confirmLoad) {
-        // Increment batch until desired page is unlocked
-        let currentMax = maxAllowedPages;
-        while (currentMax < pageNum) {
-          loadNextBatch();
-          currentMax += 10;
-        }
-        setActivePage(pageNum);
-      }
-    } else {
-      setActivePage(pageNum);
-    }
-  };
-
-  // Scroll active thumbnail into view
+  // Auto-scroll active thumbnail into view
   useEffect(() => {
-    if (activeTab !== 'thumbs' || !listContainerRef.current) return;
-    
-    // Find active element
-    const container = listContainerRef.current;
-    const activeItem = container.querySelector('.active-thumb');
-    
-    if (activeItem) {
-      activeItem.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      });
-    }
+    if (activeTab !== 'thumbs' || !listRef.current) return;
+    const active = listRef.current.querySelector('.active-thumb');
+    if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [activePage, activeTab]);
+
+  const handleThumbClick = (pageNum) => {
+    setActivePage(pageNum);
+  };
 
   return (
     <div className="sidebar-thumbnails-panel">
-      {/* Tab Switcher Headers */}
+
+      {/* Tab headers */}
       <div className="sidebar-tabs-header">
         <button
           className={`sidebar-tab-btn ${activeTab === 'thumbs' ? 'tab-active' : ''}`}
           onClick={() => setActiveTab('thumbs')}
         >
-          <FileText size={14} />
-          <span>Pages</span>
+          <FileText size={14} /><span>Pages</span>
         </button>
         <button
           className={`sidebar-tab-btn ${activeTab === 'toc' ? 'tab-active' : ''}`}
           onClick={() => setActiveTab('toc')}
         >
-          <Compass size={14} />
-          <span>Index</span>
+          <Compass size={14} /><span>Index</span>
         </button>
       </div>
 
-      {/* Pages Thumbnails View */}
+      {/* Thumbnails tab */}
       {activeTab === 'thumbs' ? (
-        <div className="sidebar-thumbs-list" ref={listContainerRef}>
+        <div className="sidebar-thumbs-list" ref={listRef}>
           {Array.from({ length: numPages }, (_, i) => {
             const pageNum = i + 1;
-            const isLocked = pageNum > maxAllowedPages;
-            const isActive = activePage === pageNum || (activePage % 2 === 0 && activePage + 1 === pageNum && pageNum !== 1);
+            const isActive =
+              activePage === pageNum ||
+              (isDoublePage && activePage % 2 === 0 && activePage + 1 === pageNum);
 
             return (
-              <ThumbnailItem
+              <LazyThumbnail
                 key={pageNum}
                 pageNum={pageNum}
-                pageCache={pageCache}
-                renderingPages={renderingPages}
-                renderPageToCache={renderPageToCache}
-                isLocked={isLocked}
+                getPageImageUrl={getPageImageUrl}
                 isActive={isActive}
                 onClick={() => handleThumbClick(pageNum)}
               />
@@ -165,24 +117,23 @@ export function Thumbnails({
           })}
         </div>
       ) : (
-        /* Table of Contents View */
+        /* Table of Contents tab */
         <div className="sidebar-toc-list">
           <div className="toc-info-bar">
             <span>Click any section to jump directly to that page.</span>
           </div>
           {tocSections.map((sec, idx) => {
-            const isLocked = sec.page > maxAllowedPages;
-            const isActive = activePage === sec.page || (activePage % 2 === 0 && activePage + 1 === sec.page && sec.page !== 1);
+            const isActive =
+              activePage === sec.page ||
+              (isDoublePage && activePage % 2 === 0 && activePage + 1 === sec.page);
 
             return (
               <div
                 key={idx}
-                className={`toc-item-row ${isActive ? 'active-toc' : ''} ${isLocked ? 'locked-toc' : ''}`}
+                className={`toc-item-row ${isActive ? 'active-toc' : ''}`}
                 onClick={() => handleThumbClick(sec.page)}
               >
-                <div className="toc-number-pill">
-                  {isLocked ? <Lock size={10} /> : sec.page}
-                </div>
+                <div className="toc-number-pill">{sec.page}</div>
                 <div className="toc-text-wrapper">
                   <h4 className="toc-item-title">{sec.title}</h4>
                   <p className="toc-item-desc">{sec.desc}</p>
