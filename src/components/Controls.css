@@ -323,32 +323,9 @@
   }
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
+/* Hide floating HUD on mobile — PageFlip bottom nav is used instead */
+@media (max-width: 899px) {
   .controls-hud-wrapper {
-    width: 98%;
-    padding: 12px 16px;
-    gap: 12px;
-  }
-  .hud-buttons-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-  .hud-group {
-    justify-content: center;
-  }
-  .group-right {
-    justify-content: space-between;
-  }
-  .hud-batch-alert-bar {
-    flex-direction: column;
-    align-items: stretch;
-    text-align: center;
-    gap: 10px;
-    padding: 12px;
-  }
-  .alert-content {
-    justify-content: center;
+    display: none;
   }
 }

@@ -4,18 +4,7 @@ import { getPageImageUrl } from '../hooks/useImageMagazine';
 import './PageFlip.css';
 
 /**
- * PageFlip
- * Real book page-flip viewer using pre-rendered WebP images.
- * Supports both desktop (double-page spread) and mobile (single page) modes.
- * The flip effect is a genuine 3D CSS rotateY animation on both modes.
- *
- * Props:
- *  - numPages        : total page count
- *  - activePage      : current page (1-indexed)
- *  - setActivePage   : setter for activePage
- *  - isDoublePage    : boolean from parent (desktop = true, mobile = false)
- *  - zoomScale       : CSS scale factor
- *  - onPageTurn      : optional callback(direction) for external buttons (Controls HUD)
+ * PageFlip — book page-flip viewer (double-page desktop, single-page mobile).
  */
 export function PageFlip({
   numPages,
@@ -23,26 +12,16 @@ export function PageFlip({
   setActivePage,
   isDoublePage,
   zoomScale = 1,
-  flipRef,          // ref so parent Controls can call flip externally
+  flipRef,
 }) {
-  // ------- flip animation state -------
   const [isFlipping, setIsFlipping] = useState(false);
-  const [flipDir, setFlipDir] = useState(null); // 'next' | 'prev'
-  const [flipFromPage, setFlipFromPage] = useState(null); // page visible before flip
-  const [flipToPage, setFlipToPage] = useState(null);     // page visible after flip
+  const [flipDir, setFlipDir] = useState(null);
+  const [flipFromPage, setFlipFromPage] = useState(null);
+  const [flipToPage, setFlipToPage] = useState(null);
 
-  // touch handling
   const touchStartX = useRef(null);
-  const isFlippingRef = useRef(false); // avoid stale closure in touch
+  const isFlippingRef = useRef(false);
 
-  // ------- helpers -------
-  /**
-   * For double-page mode:
-   *   page 1         → left=null, right=1  (cover alone on right)
-   *   page 2,3       → left=2, right=3
-   *   page 4,5       → left=4, right=5
-   *   last if even   → left=last, right=null
-   */
   const getSpread = useCallback((page) => {
     if (!isDoublePage) return { left: null, right: page };
     if (page === 1) return { left: null, right: 1 };
@@ -53,27 +32,20 @@ export function PageFlip({
 
   const currentSpread = getSpread(activePage);
 
-  /**
-   * Core flip trigger. Direction: 'next' | 'prev'
-   */
   const handleFlip = useCallback((direction) => {
     if (isFlippingRef.current) return;
 
     if (direction === 'next') {
-      // Calculate next page
       let nextPage;
       if (!isDoublePage) {
         nextPage = activePage + 1;
       } else {
         nextPage = activePage === 1 ? 2 : activePage + 2;
-        // align to even so spreads stay clean
         if (nextPage % 2 !== 0 && nextPage !== 1) nextPage = nextPage - 1;
-        // safety: don't go past cover+2 logic
         if (activePage === 1) nextPage = 2;
       }
       if (nextPage > numPages) return;
 
-      // record what we're flipping from/to
       setFlipFromPage(activePage);
       setFlipToPage(nextPage);
       setFlipDir('next');
@@ -86,9 +58,7 @@ export function PageFlip({
         setFlipDir(null);
         isFlippingRef.current = false;
       }, 650);
-
     } else {
-      // prev
       let prevPage;
       if (!isDoublePage) {
         prevPage = activePage - 1;
@@ -117,14 +87,10 @@ export function PageFlip({
     }
   }, [activePage, numPages, isDoublePage, setActivePage]);
 
-  // Expose handleFlip to parent via flipRef so Controls HUD can call it
   useEffect(() => {
-    if (flipRef) {
-      flipRef.current = handleFlip;
-    }
+    if (flipRef) flipRef.current = handleFlip;
   }, [flipRef, handleFlip]);
 
-  // Keyboard navigation
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'ArrowRight') handleFlip('next');
@@ -134,7 +100,6 @@ export function PageFlip({
     return () => window.removeEventListener('keydown', onKey);
   }, [handleFlip]);
 
-  // Touch / swipe
   const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
   const onTouchEnd = (e) => {
     if (touchStartX.current === null) return;
@@ -144,38 +109,18 @@ export function PageFlip({
     touchStartX.current = null;
   };
 
-  // ------- what to render during/after flip -------
-  /**
-   * During a flip animation we keep the PREVIOUS spread visible as background
-   * and overlay a flipping sheet that shows the OUTGOING page on its front face
-   * and INCOMING page on its back face.
-   *
-   * DOUBLE MODE:
-   *   next flip: right-side page peels left → reveals new right page on back
-   *   prev flip: left-side page peels right → reveals new left page on back
-   *
-   * SINGLE MODE:
-   *   next: current page peels left → new page revealed underneath / on back
-   *   prev: new page sweeps in from right
-   */
-
   const fromSpread = flipFromPage !== null ? getSpread(flipFromPage) : currentSpread;
   const toSpread = flipToPage !== null ? getSpread(flipToPage) : currentSpread;
 
-  // The stable background during flip (the pages that are NOT involved in the peel)
   const bgLeft = flipDir === 'next' ? fromSpread.left : toSpread.left;
   const bgRight = flipDir === 'next' ? toSpread.right : fromSpread.right;
-
-  // The page peeling (front=leaving, back=arriving)
   const peelFront = flipDir === 'next' ? fromSpread.right : fromSpread.left;
   const peelBack = flipDir === 'next' ? toSpread.left : toSpread.right;
 
-  // ------- single-page equivalents -------
   const singleBg = flipDir === 'next' ? flipToPage : flipFromPage;
   const singleFront = flipDir === 'next' ? flipFromPage : flipToPage;
   const singleBack = flipDir === 'next' ? flipToPage : flipFromPage;
 
-  // ------- page image helper -------
   const PageImg = ({ pageNum, className = '' }) => {
     if (!pageNum) return <div className={`page-blank ${className}`} />;
     return (
@@ -189,7 +134,6 @@ export function PageFlip({
     );
   };
 
-  // ------- can navigate? -------
   const canNext = activePage < numPages;
   const canPrev = activePage > 1;
 
@@ -198,102 +142,119 @@ export function PageFlip({
       className="pf-outer"
       style={{ transform: `scale(${zoomScale})`, transformOrigin: 'center top' }}
     >
-      <div
-        className={`pf-book ${isDoublePage ? 'pf-double' : 'pf-single'}`}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-      >
-        {/* ======== DOUBLE PAGE MODE ======== */}
-        {isDoublePage ? (
-          <>
-            {/* Background spread — shown during both idle and flip */}
-            <div className="pf-page pf-left">
-              {isFlipping
-                ? <PageImg pageNum={bgLeft} />
-                : <PageImg pageNum={currentSpread.left} />
-              }
+      <div className="pf-viewport">
+        <div
+          className={`pf-book ${isDoublePage ? 'pf-double' : 'pf-single'}`}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          {isDoublePage ? (
+            <>
+              <div className="pf-page pf-left">
+                {isFlipping
+                  ? <PageImg pageNum={bgLeft} />
+                  : <PageImg pageNum={currentSpread.left} />}
+              </div>
+
+              <div className="pf-spine" />
+
+              <div className="pf-page pf-right">
+                {isFlipping
+                  ? <PageImg pageNum={bgRight} />
+                  : <PageImg pageNum={currentSpread.right} />}
+              </div>
+
+              {isFlipping && (
+                <div className={`pf-sheet pf-sheet-${flipDir}`}>
+                  <div className="pf-face pf-front">
+                    <PageImg pageNum={peelFront} />
+                  </div>
+                  <div className="pf-face pf-back">
+                    <PageImg pageNum={peelBack} />
+                  </div>
+                </div>
+              )}
+
+              {!isFlipping && currentSpread.left && (
+                <div className="pf-pagenum pf-pagenum-left">{currentSpread.left}</div>
+              )}
+              {!isFlipping && currentSpread.right && (
+                <div className="pf-pagenum pf-pagenum-right">{currentSpread.right}</div>
+              )}
+            </>
+          ) : (
+            <div className="pf-single-stage">
+              {isFlipping && (
+                <div className="pf-single-bg">
+                  <PageImg pageNum={singleBg} />
+                </div>
+              )}
+
+              {!isFlipping ? (
+                <div className="pf-single-page">
+                  <PageImg pageNum={activePage} />
+                </div>
+              ) : (
+                <div className={`pf-sheet-single pf-sheet-single-${flipDir}`}>
+                  <div className="pf-face pf-front">
+                    <PageImg pageNum={singleFront} />
+                  </div>
+                  <div className="pf-face pf-back">
+                    <PageImg pageNum={singleBack} />
+                  </div>
+                </div>
+              )}
+
+              <div className="pf-pagenum pf-pagenum-right">{activePage}</div>
             </div>
+          )}
+        </div>
 
-            <div className="pf-spine" />
+        {/* Desktop side arrows */}
+        <button
+          className={`pf-nav pf-nav-left pf-nav-desktop ${!canPrev ? 'pf-nav-disabled' : ''}`}
+          onClick={() => handleFlip('prev')}
+          aria-label="Previous page"
+          type="button"
+        >
+          <ChevronLeft size={28} />
+        </button>
 
-            <div className="pf-page pf-right">
-              {isFlipping
-                ? <PageImg pageNum={bgRight} />
-                : <PageImg pageNum={currentSpread.right} />
-              }
-            </div>
-
-            {/* Flipping peel sheet — only during animation */}
-            {isFlipping && (
-              <div className={`pf-sheet pf-sheet-${flipDir}`}>
-                <div className="pf-face pf-front">
-                  <PageImg pageNum={peelFront} />
-                </div>
-                <div className="pf-face pf-back">
-                  <PageImg pageNum={peelBack} />
-                </div>
-              </div>
-            )}
-
-            {/* Page number overlays */}
-            {!isFlipping && currentSpread.left && (
-              <div className="pf-pagenum pf-pagenum-left">{currentSpread.left}</div>
-            )}
-            {!isFlipping && currentSpread.right && (
-              <div className="pf-pagenum pf-pagenum-right">{currentSpread.right}</div>
-            )}
-          </>
-        ) : (
-          /* ======== SINGLE PAGE MODE (MOBILE) ======== */
-          <div className="pf-single-stage">
-            {/* Background page (destination) */}
-            {isFlipping && (
-              <div className="pf-single-bg">
-                <PageImg pageNum={singleBg} />
-              </div>
-            )}
-
-            {/* Current/foreground page */}
-            {!isFlipping ? (
-              <div className="pf-single-page">
-                <PageImg pageNum={activePage} />
-              </div>
-            ) : (
-              /* Flipping sheet */
-              <div className={`pf-sheet-single pf-sheet-single-${flipDir}`}>
-                <div className="pf-face pf-front">
-                  <PageImg pageNum={singleFront} />
-                </div>
-                <div className="pf-face pf-back">
-                  <PageImg pageNum={singleBack} />
-                </div>
-              </div>
-            )}
-
-            {/* Page number */}
-            <div className="pf-pagenum pf-pagenum-right">{activePage}</div>
-          </div>
-        )}
+        <button
+          className={`pf-nav pf-nav-right pf-nav-desktop ${!canNext ? 'pf-nav-disabled' : ''}`}
+          onClick={() => handleFlip('next')}
+          aria-label="Next page"
+          type="button"
+        >
+          <ChevronRight size={28} />
+        </button>
       </div>
 
-      {/* Nav Arrows */}
-      <button
-        className={`pf-nav pf-nav-left ${!canPrev ? 'pf-nav-disabled' : ''}`}
-        onClick={() => handleFlip('prev')}
-        aria-label="Previous page"
-      >
-        <ChevronLeft size={28} />
-      </button>
+      {/* Mobile bottom navigation */}
+      <div className="pf-mobile-nav-row">
+        <button
+          className={`pf-mobile-btn ${!canPrev ? 'pf-nav-disabled' : ''}`}
+          onClick={() => handleFlip('prev')}
+          aria-label="Previous page"
+          type="button"
+        >
+          <ChevronLeft size={26} />
+        </button>
 
-      <button
-        className={`pf-nav pf-nav-right ${!canNext ? 'pf-nav-disabled' : ''}`}
-        onClick={() => handleFlip('next')}
-        aria-label="Next page"
-      >
-        <ChevronRight size={28} />
-      </button>
+        <span className="pf-mobile-page-label">
+          {activePage} / {numPages}
+        </span>
 
-      {/* Hint bar */}
+        <button
+          className={`pf-mobile-btn ${!canNext ? 'pf-nav-disabled' : ''}`}
+          onClick={() => handleFlip('next')}
+          aria-label="Next page"
+          type="button"
+        >
+          <ChevronRight size={26} />
+        </button>
+      </div>
+
       <div className="pf-hint">
         {isDoublePage
           ? 'Arrow keys · Click arrows · Swipe to turn pages'

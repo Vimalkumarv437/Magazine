@@ -299,36 +299,34 @@
   transform: scale(1.05);
 }
 
-/* Responsive Overwrites */
-@media (max-width: 900px) {
+/* Mobile: book images + bottom nav only */
+@media (max-width: 899px) {
   .app-header {
-    height: 60px;
-    padding: 0 16px;
-  }
-  .brand-title {
-    font-size: 1rem;
-  }
-  .brand-logo-glow {
-    width: 26px;
-    height: 26px;
-  }
-  .header-status-text,
-  .brand-edition-badge {
     display: none;
   }
-  .app-body-container {
-    height: calc(100vh - 60px);
-  }
+
   .sidebar-pane {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 260px;
-    min-width: 260px;
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.7);
+    display: none !important;
   }
+
+  .app-body-container {
+    height: 100vh;
+    height: 100dvh;
+    background: #000;
+  }
+
   .magazine-pane {
-    padding: 10px;
+    padding: 0;
+    background: #000;
+    justify-content: flex-start;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .magazine-pane .pf-outer {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
   }
 }
